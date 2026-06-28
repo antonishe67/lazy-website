@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Угадай Слово</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .game-container {
+            background-color: #2b2b2b;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 340px;
+        }
+        .balance-display { font-size: 18px; color: #ffcc00; font-weight: bold; }
+        .word-display {
+            font-size: 32px;
+            letter-spacing: 6px;
+            margin: 15px 0;
+            font-weight: bold;
+            color: #bac49a;
+        }
+        input {
+            padding: 10px;
+            font-size: 18px;
+            text-align: center;
+            width: 150px;
+            border-radius: 5px;
+            border: none;
+            outline: none;
+            background-color: #444;
+            color: white;
+        }
+        .main-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #a8f5a8;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .main-btn:hover { background-color: #8ce08c; }
+        .hint-btn {
+            background-color: #dfb76c;
+            color: black;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .hint-btn:hover { background-color: #fbc02d; }
+        .back-link { color: #888; text-decoration: none; font-size: 14px; }
+        .back-link:hover { color: #3b82f6; }
+        .toast-container {
+            position: fixed; top: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 10px; z-index: 1000;
+        }
+        .toast {
+            background-color: #333; color: white; padding: 12px 24px;
+            border-radius: 8px; font-size: 16px; font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+            border-left: 5px solid white;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="game-container">
+        <h2>Угадай Слово</h2>
+        <div class="balance-display">Монеты: <span id="coins-balance">0</span> 💲 </div>
+        <div class="word-display" id="wordDisplay">_ _ _ _ _</div>
+        <input type="text" id="letterInp" placeholder="Буква или слово..." maxlength="20">
+        <button onclick="sendLetter()" class="main-btn">Проверить</button>
+        <button onclick="takeHint()" class="hint-btn">💡 Подсказка (-20 монет)</button>
+        <a href="/menu-page" class="back-link">← Назад в меню</a>
+    </div>
+
+    <script>
+        const inp = () => document.getElementById('letterInp');
+        const def_focus = () => inp().focus();
+
+        async function loadGame() {
+            def_focus();
+            inp().addEventListener('keydown', e => { if (e.key === 'Enter') sendLetter(); });
+
+            const res = await fetch('/word-game-init');
+            if (!res.ok) { window.location.href = '/'; return; }
+            const data = await res.json();
+            document.getElementById('coins-balance').textContent = data.coins;
+            document.getElementById('wordDisplay').innerText = data.display_word;
+        }
+        window.onload = loadGame;
+
+        function showToast(text, color = "#ffffff") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderLeftColor = color;
+            toast.innerText = text;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function sendLetter() {
+            const el = inp();
+            const letter = el.value.trim();
+            el.value = '';
+            if (!letter) { def_focus(); return; }
+
+            const res = await fetch('/check-letter', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ letter })
+            });
+            const data = await res.json();
+
+            if (!res.ok) { showToast(data.detail, "#ff4a4a"); def_focus(); return; }
+
+            document.getElementById('coins-balance').textContent = data.coins;
+            if (data.display_word) document.getElementById('wordDisplay').innerText = data.display_word;
+
+            if (data.is_win) {
+                showToast(`🏆 Победа! +${data.reward} монет!`, "#4aff4a");
+                setTimeout(() => {
+                    if (confirm(`Победа! Вы получили ${data.reward} монет!\nСыграть ещё раз?`)) {
+                        window.location.reload();
+                    } else {
+                        window.location.href = '/menu-page';
+                    }
+                }, 500);
+                return;
+            }
+
+            if (letter.length === 1) {
+                const found = data.display_word && data.display_word.includes(letter.toLowerCase());
+                showToast(
+                    found ? `Отлично! Буква "${letter.toUpperCase()}" есть!` : `Увы, буквы "${letter.toUpperCase()}" нет!`,
+                    found ? "#4aff4a" : "#ff4a4a"
+                );
+            } else {
+                showToast("Неверное слово!", "#ff4a4a");
+            }
+            def_focus();
+        }
+
+        async function takeHint() {
+            const res = await fetch('/get-hint', { method: 'POST' });
+            const data = await res.json();
+
+            if (!res.ok) { showToast(data.detail, "#ff4a4a"); def_focus(); return; }
+
+            document.getElementById('coins-balance').textContent = data.coins;
+            document.getElementById('wordDisplay').innerText = data.display_word;
+            showToast(`💡 Подсказана буква "${data.letter.toUpperCase()}"!`, "#dfb76c");
+
+            if (data.is_win) {
+                setTimeout(() => {
+                    if (confirm(`Слово угадано с подсказкой! Вы получили ${data.reward} монет!\nСыграть ещё раз?`)) {
+                        window.location.reload();
+                    } else {
+                        window.location.href = '/menu-page';
+                    }
+                }, 500);
+            }
+            def_focus();
+        }
+    </script>
+</body>
+</html>

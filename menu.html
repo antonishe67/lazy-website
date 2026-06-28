@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Меню развлечений</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .menu-container {
+            background-color: #2b2b2b;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 320px;
+            text-align: center;
+        }
+        h2 { margin-bottom: 10px; font-size: 26px; }
+        .user-info {
+            font-size: 14px;
+            color: #aaa;
+        }
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 14px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: black;
+            background-color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: 0.2s;
+            box-sizing: border-box;
+        }
+        .menu-btn:hover { background-color: #a8f5a8; transform: scale(1.02); }
+        .menu-btn:active { background-color: #c0c0c0; }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 5px;
+        }
+        .logout-btn:hover { color: #ff4a4a; }
+    </style>
+</head>
+<body>
+    <div class="menu-container">
+        <h2>Выбери развлечение</h2>
+        <div class="user-info" id="userInfo">Загрузка...</div>
+        <a href="/clicker-game" class="menu-btn">🖱️ Играть в Кликер</a>
+        <a href="/word-game" class="menu-btn">🔤 Играть в Угадай Слово</a>
+        <button class="logout-btn" onclick="logout()">Выйти из аккаунта</button>
+    </div>
+
+    <script>
+        async function loadUser() {
+            try {
+                const res = await fetch('/get-stats');
+                if (!res.ok) { window.location.href = '/'; return; }
+                const data = await res.json();
+                document.getElementById('userInfo').textContent =
+                    `Привет, ${data.username}! 💲 ${data.coins} монет | Уровень ${data.level}`;
+            } catch {
+                window.location.href = '/';
+            }
+        }
+
+        async function logout() {
+            await fetch('/logout', { method: 'POST' });
+            window.location.href = '/';
+        }
+
+        window.onload = loadUser;
+    </script>
+</body>
+</html>

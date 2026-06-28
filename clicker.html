@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Супер Кликер</title>
+    <style>
+        body {
+            background-color: #ffea00;
+            color: #1a1a1a;
+            font-family: sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.5s;
+        }
+        body:active { filter: brightness(1.06); }
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            width: 94%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            gap: 10px;
+        }
+        .bar-block {
+            background-color: #023047;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 16px;
+            white-space: nowrap;
+            transition: background-color 0.5s, color 0.5s;
+        }
+        .back-link {
+            text-decoration: none;
+            color: white;
+            background-color: #023047;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            flex-shrink: 0;
+            transition: background-color 0.5s;
+        }
+        .center-text {
+            text-align: center;
+            font-size: 34px;
+            font-weight: 900;
+            color: #023047;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: color 0.5s;
+        }
+        .coin-art {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 180px;
+            height: 180px;
+            margin-top: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        .coin-art span { font-size: 80px; line-height: 1; display: block; text-align: center; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .plus-one {
+            position: absolute;
+            font-size: 22px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: flyUp 0.5s ease-out forwards;
+            z-index: 5;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        @keyframes flyUp {
+            0%   { transform: translate(-50%,-50%) translateY(0); opacity: 1; }
+            100% { transform: translate(-50%,-50%) translateY(-100px); opacity: 0; }
+        }
+        .suspicious-coin {
+            position: absolute;
+            font-size: 50px;
+            z-index: 20;
+            cursor: pointer;
+            animation: pulse 0.5s infinite alternate;
+        }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.2); } }
+        .bottom-menu {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        .menu-btn {
+            background-color: #023047;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.5s, color 0.5s;
+        }
+        .menu-btn:hover { opacity: 0.85; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #1a1a1a;
+            color: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .modal h3 { margin: 0; text-align: center; font-size: 20px; }
+        .skin-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #2b2b2b;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .skin-card:hover { background: #3a3a3a; }
+        .skin-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+        .skin-icon {
+            width: 60px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; background: #ffea00; border-radius: 8px; color: #000;
+        }
+        .skin-info { flex: 1; }
+        .skin-name { font-weight: bold; font-size: 15px; }
+        .skin-price { color: #ffcc00; font-size: 13px; margin-top: 4px; }
+        .modal-close {
+            background: #444; color: white; border: none;
+            padding: 10px; border-radius: 8px; cursor: pointer; font-size: 14px;
+        }
+        .modal-close:hover { background: #555; }
+        .piggy-input {
+            padding: 10px; font-size: 16px; border-radius: 8px;
+            border: none; background: #333; color: white;
+            text-align: center; width: 100%; box-sizing: border-box;
+        }
+        .piggy-btn {
+            background: #ffcc00; color: black; border: none;
+            padding: 12px; border-radius: 8px; cursor: pointer;
+            font-size: 16px; font-weight: bold;
+        }
+        .piggy-btn:hover { background: #ffd700; }
+        .piggy-info { color: #aaa; font-size: 13px; text-align: center; }
+    </style>
+</head>
+<body onclick="handleScreenClick(event)">
+    <div class="top-bar">
+        <a href="/menu-page" class="back-link" onclick="event.stopPropagation();">&#8592;</a>
+        <div class="bar-block">Ур. <span id="lvl">1</span> (<span id="xp">0</span>/<span id="next-xp">10000</span> XP)</div>
+        <div class="bar-block">&#9889; <span id="clicks-balance">0</span></div>
+        <div class="bar-block">$ <span id="coins-balance">0</span></div>
+    </div>
+
+    <div class="center-text" id="centerText">
+        ТАПАЙ ЭКРАН!
+        <div class="coin-art" id="coinSkin"><span>$</span></div>
+    </div>
+
+    <div class="bottom-menu">
+        <button class="menu-btn" id="piggyBtn" onclick="openPiggy(event)">Копилка (Лвл 2)</button>
+        <button class="menu-btn" onclick="openShop(event)">Магазин</button>
+    </div>
+
+    <!-- Модалка копилки -->
+    <div class="modal-overlay" id="piggyModal" onclick="closePiggyOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3>Копилка</h3>
+            <div class="piggy-info" id="piggyInfo"></div>
+            <input type="number" id="piggyInput" class="piggy-input" placeholder="Сколько кликов обменять?">
+            <button class="piggy-btn" onclick="confirmPiggy()">Обменять в XP</button>
+            <button class="modal-close" onclick="document.getElementById('piggyModal').classList.remove('open')">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Модалка магазина -->
+    <div class="modal-overlay" id="shopModal" onclick="closeShopOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3>Магазин скинов</h3>
+            <div id="skinList"></div>
+            <button class="modal-close" onclick="closeShopModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        let currentLvl = 1;
+        let currentCoins = 0;
+        let currentClicks = 0;
+
+        const THEMES = {
+            default: {
+                bg: '#ffea00', bgImg: '',
+                textColor: '#023047', barBg: '#023047', barColor: 'white',
+                btnBg: '#023047', btnColor: 'white', icon: '$'
+            },
+            matrix: {
+                bg: '#000', bgImg: '/static/matrix.jpeg',
+                textColor: '#00ff00', barBg: '#003300', barColor: '#00ff00',
+                btnBg: '#003300', btnColor: '#00ff00', icon: 'MATRIX'
+            },
+            rabbit: {
+                bg: '#0a0020', bgImg: '/static/rabbit.jpg',
+                textColor: '#ffffff', barBg: '#1a0040', barColor: '#ff88ff',
+                btnBg: '#1a0040', btnColor: '#ff88ff', icon: '67'
+            }
+        };
+
+        function applyTheme(skin) {
+            let t = THEMES.default;
+            if (skin && skin.includes('matrix')) t = THEMES.matrix;
+            else if (skin && skin.includes('rabbit')) t = THEMES.rabbit;
+
+            document.body.style.backgroundColor = t.bg;
+            document.body.style.backgroundImage = t.bgImg ? `url(${t.bgImg})` : '';
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'top';
+            document.body.style.backgroundRepeat = 'no-repeat';
+
+            document.getElementById('centerText').style.color = t.textColor;
+            document.getElementById('coinSkin').innerHTML =
+                `<span style="color:${t.textColor}">${t.icon}</span>`;
+
+            document.querySelectorAll('.bar-block').forEach(el => {
+                el.style.backgroundColor = t.barBg;
+                el.style.color = t.barColor;
+            });
+            document.querySelector('.back-link').style.backgroundColor = t.barBg;
+            document.querySelector('.back-link').style.color = t.barColor;
+            document.querySelectorAll('.menu-btn').forEach(el => {
+                el.style.backgroundColor = t.btnBg;
+                el.style.color = t.btnColor;
+            });
+        }
+
+        function updateStats(data) {
+            document.getElementById('coins-balance').textContent = data.coins;
+            document.getElementById('clicks-balance').textContent = data.clicks;
+            document.getElementById('xp').textContent = data.xp;
+            document.getElementById('lvl').textContent = data.level;
+            document.getElementById('next-xp').textContent = data.next_level_xp;
+            currentLvl = data.level;
+            currentCoins = data.coins;
+            currentClicks = data.clicks;
+            if (data.skin !== undefined) applyTheme(data.skin);
+        }
+
+        async function loadData() {
+            const res = await fetch('/get-stats');
+            if (!res.ok) { window.location.href = '/'; return; }
+            updateStats(await res.json());
+        }
+        window.onload = loadData;
+
+        async function handleScreenClick(event) {
+            if (event.target.closest('a, button, .suspicious-coin, .modal-overlay')) return;
+            const res = await fetch('/click', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: 'normal'})
+            });
+            if (!res.ok) { window.location.href = '/'; return; }
+            const data = await res.json();
+            let color = "#023047", txt = "+1 Клик";
+            if (data.click_type === "crit") { color = "#d00000"; txt = "КРИТ! +100$ +50XP!"; }
+            createFlyingText(event.clientX, event.clientY, txt, color);
+            updateStats(data);
+        }
+
+        function createFlyingText(x, y, text, color) {
+            const el = document.createElement('div');
+            el.className = 'plus-one';
+            el.innerText = text;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.color = color;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 500);
+        }
+
+        setInterval(() => {
+            if (Math.random() > 0.5) return;
+            const bonus = document.createElement('div');
+            bonus.className = 'suspicious-coin';
+            bonus.innerText = '🔥';
+            bonus.style.left = Math.random() * (window.innerWidth - 60) + 'px';
+            bonus.style.top = Math.random() * (window.innerHeight - 150) + 100 + 'px';
+            document.body.appendChild(bonus);
+            let clicked = false;
+            bonus.onclick = async (e) => {
+                e.stopPropagation(); clicked = true;
+                const res = await fetch('/click', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: 'bonus'}) });
+                const data = await res.json();
+                createFlyingText(e.clientX, e.clientY, "+50 Монет!", "#007200");
+                updateStats(data); bonus.remove();
+            };
+            setTimeout(async () => {
+                if (!clicked) {
+                    bonus.remove();
+                    const res = await fetch('/click', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: 'penalty'}) });
+                    const data = await res.json();
+                    updateStats(data);
+                    createFlyingText(window.innerWidth/2, window.innerHeight/2, "Упустил! -20$", "#d00000");
+                }
+            }, 3000);
+        }, 25000);
+
+        // Копилка
+        function openPiggy(e) {
+            e.stopPropagation();
+            if (currentLvl < 2) { alert("Копилка доступна со 2 уровня!"); return; }
+            document.getElementById('piggyInfo').textContent =
+                `Кликов: ${currentClicks} | Макс: ${currentLvl * 1000} | Курс: 2 клика = 1 XP`;
+            document.getElementById('piggyInput').value = '';
+            document.getElementById('piggyModal').classList.add('open');
+        }
+        function closePiggyOverlay(e) { document.getElementById('piggyModal').classList.remove('open'); }
+        async function confirmPiggy() {
+            const clicks = parseInt(document.getElementById('piggyInput').value);
+            if (!clicks || clicks <= 0) { alert("Введи количество кликов!"); return; }
+            const res = await fetch('/exchange-clicks', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({clicks_to_exchange: clicks})
+            });
+            const data = await res.json();
+            if (!res.ok) { alert(data.detail); return; }
+            document.getElementById('piggyModal').classList.remove('open');
+            createFlyingText(window.innerWidth/2, window.innerHeight/2, `+${Math.floor(clicks/2)} XP!`, "#ffcc00");
+            updateStats(data);
+        }
+
+        // Магазин
+        let skinsData = [];
+        async function openShop(e) {
+            e.stopPropagation();
+            if (!skinsData.length) { const r = await fetch('/get-skins'); skinsData = await r.json(); }
+            const list = document.getElementById('skinList');
+            list.innerHTML = '';
+            for (const skin of skinsData) {
+                const card = document.createElement('div');
+                card.className = 'skin-card';
+                const preview = skin.path === 'default'
+                    ? `<div class="skin-icon">☀</div>`
+                    : `<img src="${skin.path}" alt="${skin.name}">`;
+                card.innerHTML = `${preview}<div class="skin-info"><div class="skin-name">${skin.name}</div><div class="skin-price">${skin.price === 0 ? 'Бесплатно' : '$ ' + skin.price}</div></div>`;
+                card.onclick = () => buySkin(skin.key, skin.name, skin.price);
+                list.appendChild(card);
+            }
+            document.getElementById('shopModal').classList.add('open');
+        }
+        function closeShopOverlay(e) { document.getElementById('shopModal').classList.remove('open'); }
+        function closeShopModal() { document.getElementById('shopModal').classList.remove('open'); }
+        async function buySkin(key, name, price) {
+            if (price > 0 && currentCoins < price) { alert(`Нужно ${price}$, у тебя ${currentCoins}$`); return; }
+            if (price > 0 && !confirm(`Купить "${name}" за ${price}$?`)) return;
+            const res = await fetch('/buy-skin', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({skin_key: key})
+            });
+            const data = await res.json();
+            if (!res.ok) { alert(data.detail); return; }
+            closeShopModal();
+            updateStats(data);
+        }
+    </script>
+</body>
+</html>
